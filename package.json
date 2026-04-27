@@ -1,8 +1,8 @@
 {
   "name": "dom-scout",
-  "displayName": "Dom scout",
-  "version": "0.0.1",
-  "description": "DOM-Scout is browser companion that simplifies web-inspection.",
+  "displayName": "DOM-Scout",
+  "version": "2.1.0",
+  "description": "A research tool to correlate DOM complexity with hardware performance.",
   "author": "Vedant Sarawagi",
   "scripts": {
     "dev": "plasmo dev",
@@ -26,8 +26,24 @@
     "typescript": "5.3.3"
   },
   "manifest": {
+    "permissions": [
+      "storage",    
+      "tabs",       
+      "scripting",  
+      "sidePanel",
+      "webRequest"
+    ],
     "host_permissions": [
-      "https://*/*"
-    ]
+      "<all_urls>"  
+    ],
+    "web_accessible_resources": [
+      {
+        "resources": ["assets/tracker.js"],
+        "matches": ["<all_urls>"]
+      }
+    ],
+    "side_panel": {
+      "default_path": "sidepanel.html"
+    }
   }
 }
