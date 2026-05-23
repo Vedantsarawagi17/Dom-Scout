@@ -27,9 +27,8 @@
   },
   "manifest": {
     "permissions": [
-      "storage",    
-      "tabs",       
-      "scripting",  
+      "storage",
+      "scripting",
       "sidePanel",
       "webRequest"
     ],

@@ -1,10 +1,6 @@
-// Plasmo auto-registers this file as the Chrome service worker.
+// Background.ts file => Is a service Worker manages and works in background processes .
 
-// Remove the default_popup so the toolbar icon click fires onClicked instead of opening a popup.
-// With a default_popup set, Chrome intercepts the click and onClicked never fires.
-chrome.runtime.onInstalled.addListener(() => {
-  chrome.action.setPopup({ popup: "" })
-})
+// Plasmo auto-registers this file as the Chrome service worker.
 
 // Open the side panel when the toolbar icon is clicked
 chrome.action.onClicked.addListener((tab) => {
