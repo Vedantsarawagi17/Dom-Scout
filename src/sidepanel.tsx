@@ -692,17 +692,26 @@ export default function SidePanel() {
   const toggleTooltip = (metric: string | null) =>
     setActiveTooltip((prev) => (prev === metric ? null : metric))
 
+  const interFontUrl = chrome.runtime.getURL("assets/fonts/InterVariable.woff2")
+
   // ── Render ────────────────────────────────────────────────────────────────────
   return (
     // Clicking the page background closes all open tooltips
     // Equivalent to document.addEventListener('click', ...) in sidepanel.js
     <div
       onClick={() => setActiveTooltip(null)}
-      style={{ width: "100%", minHeight: "100vh", fontFamily: "'Segoe UI', system-ui, sans-serif", background: "#0f0f13", color: "#e0e0e0", padding: "18px 16px", boxSizing: "border-box" }}>
+      style={{ width: "100%", minHeight: "100vh", fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif", background: "#0f0f13", color: "#e0e0e0", padding: "18px 16px", boxSizing: "border-box" }}>
 
       {/* All CSS classes from sidepanel.html injected as a <style> tag.
           This preserves every animation, hover state, and transition exactly. */}
       <style>{`
+        @font-face {
+          font-family: 'Inter';
+          src: url('${interFontUrl}') format('woff2');
+          font-display: swap;
+          font-style: normal;
+          font-weight: 100 900;
+        }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         @keyframes pulse         { 0%,100%{opacity:1} 50%{opacity:0.4} }
         @keyframes slideDownFade { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }

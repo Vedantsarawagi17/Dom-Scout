@@ -42,4 +42,6 @@ before the DOM is even built. Critical so the tracker gets in before any page sc
 ## web_accessible_resources
 
 tracker.js is listed here so content.tsx can inject it with chrome.runtime.getURL().
-Chrome requires this declaration before a web page can load the extension asset.
+The local Inter font is listed here so the side panel can load it from the
+packaged extension instead of requesting Google Fonts at runtime.
+Chrome requires this declaration before a web page can load an extension asset.

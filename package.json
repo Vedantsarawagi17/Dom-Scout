@@ -37,7 +37,10 @@
     ],
     "web_accessible_resources": [
       {
-        "resources": ["assets/tracker.js"],
+        "resources": [
+          "assets/tracker.js",
+          "assets/fonts/InterVariable.woff2"
+        ],
         "matches": ["<all_urls>"]
       }
     ],
