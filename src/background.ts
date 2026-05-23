@@ -2,9 +2,13 @@
 
 // Plasmo auto-registers this file as the Chrome service worker.
 
+// Track the last tab that opened the side panel — set by action.onClicked
+let lastClickedTabId: number | null = null
+
 // Open the side panel when the toolbar icon is clicked
 chrome.action.onClicked.addListener((tab) => {
   if (!tab.id) return
+  lastClickedTabId = tab.id
   chrome.sidePanel.setOptions({ tabId: tab.id, path: "sidepanel.html", enabled: true })
   chrome.sidePanel.open({ tabId: tab.id })
 })
@@ -16,6 +20,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   } else if (request.type === "GET_REDIRECT_TRACE") {
     sendResponse({ success: true, trace: tabRedirects.get(request.tabId) || [] })
     return false // indicates sync response
+  } else if (request.type === "GET_ACTIVE_TAB_ID") {
+    // Returns the last tab ID that opened the side panel.
+    // Avoids chrome.tabs.query which would require the tabs permission.
+    sendResponse({ tabId: lastClickedTabId })
+    return false
   }
 })
 

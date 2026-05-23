@@ -388,8 +388,11 @@ export default function SidePanel() {
   }
 
   // ── Tab change — reset all metrics when user switches tabs ──────────────────
+  // Listens for TAB_ACTIVATED messages sent by content.tsx on visibilitychange
+  // instead of chrome.tabs.onActivated — avoids needing the tabs permission.
   useEffect(() => {
-    const onTabActivated = () => {
+    const onTabActivated = (msg: any) => {
+      if (msg.type !== "TAB_ACTIVATED") return
       setVitals({})
       setLongTaskCount(0)
       setHints([])
@@ -400,32 +403,41 @@ export default function SidePanel() {
       setCulpritTotal(0)
       setCulpritIdx(0)
       setCulpritStatus("Press to locate & scroll to flagged elements")
-      // After reset, immediately fetch whatever vitals are already recorded
       setTimeout(fetchVitalsFromTab, 100)
     }
-    chrome.tabs.onActivated.addListener(onTabActivated)
-    return () => chrome.tabs.onActivated.removeListener(onTabActivated)
+    chrome.runtime.onMessage.addListener(onTabActivated)
+    return () => chrome.runtime.onMessage.removeListener(onTabActivated)
   }, [])
+
+  // ── getActiveTabId ────────────────────────────────────────────────────────────
+  // Replaces chrome.tabs.query({ active: true, currentWindow: true }) which
+  // requires the tabs permission. Instead asks the background for the tab ID
+  // it stored when the user clicked the toolbar icon — no tabs permission needed.
+  const getActiveTabId = (): Promise<number | null> =>
+    new Promise((resolve) => {
+      chrome.runtime.sendMessage({ type: "GET_ACTIVE_TAB_ID" }, (res) => {
+        resolve(res?.tabId ?? null)
+      })
+    })
 
   // ── Fetch vitals already recorded in the performance timeline ────────────────
   // When the sidepanel opens after page load, PerformanceObserver events have
   // already fired and won't fire again. This reads the timeline directly from
   // the tab so metrics appear immediately without a page reload.
   const fetchVitalsFromTab = async () => {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
-    if (!tab?.id) return
+    const tabId = await getActiveTabId()
+    if (!tabId) return
 
     // Immediately fetch redirect trace
-    chrome.runtime.sendMessage({ type: "GET_REDIRECT_TRACE", tabId: tab.id }, (res) => {
+    chrome.runtime.sendMessage({ type: "GET_REDIRECT_TRACE", tabId }, (res) => {
       if (res?.success) setRedirects(res.trace)
     })
 
     // Read persisted INP, listener total, long task count from storage
     chrome.storage.session.get("sentinelTabData").then((store) => {
       const tabData = store.sentinelTabData || {}
-      // Match by tab URL — inject a script to get the current href
       chrome.scripting.executeScript(
-        { target: { tabId: tab.id! }, func: () => location.href },
+        { target: { tabId: tabId }, func: () => location.href },
         (res) => {
           if (chrome.runtime.lastError || !res?.[0]?.result) return
           const key = res[0].result as string
@@ -443,7 +455,7 @@ export default function SidePanel() {
     // Read performance timeline entries directly from the tab
     chrome.scripting.executeScript(
       {
-        target: { tabId: tab.id },
+        target: { tabId: tabId },
         func: () => {
           const result: Record<string, string> = {}
 
@@ -575,12 +587,12 @@ export default function SidePanel() {
     fetchVitalsFromTab()
 
     const updateUI = async () => {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
-      if (!tab?.id) return
+      const tabId = await getActiveTabId()
+      if (!tabId) return
 
       chrome.scripting.executeScript(
         {
-          target: { tabId: tab.id },
+          target: { tabId: tabId },
           func: () => {
             // Iterative depth traversal — safe for deeply nested pages
             let maxDepth = 0
@@ -615,18 +627,15 @@ export default function SidePanel() {
   // Equivalent to the 'find-culprits' click handler in sidepanel.js.
   // Focuses the tab, injects SCAN_FUNC, then updates state with the results.
   const findCulprits = async () => {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
-    if (!tab?.id) return
+    const tabId = await getActiveTabId()
+    if (!tabId) return
 
     setScanning(true)
     setCulpritStatus("Searching for performance bottlenecks…")
     setCulpritTotal(0)
 
-    // Focus the tab so the scroll-into-view is visible to the user
-    await chrome.tabs.update(tab.id, { active: true })
-
     chrome.scripting.executeScript(
-      { target: { tabId: tab.id }, func: SCAN_FUNC },
+      { target: { tabId }, func: SCAN_FUNC },
       (results) => {
         setScanning(false)
 
@@ -657,14 +666,13 @@ export default function SidePanel() {
   // Equivalent to prevBtn and nextBtn click handlers in sidepanel.js.
   // Injects NAVIGATE_FUNC with the target index, then updates culpritIdx + status.
   const navigate = async (dir: "prev" | "next") => {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
-    if (!tab?.id) return
+    const tabId = await getActiveTabId()
+    if (!tabId) return
 
     const targetIdx = dir === "prev" ? culpritIdx - 1 : culpritIdx + 1
-    await chrome.tabs.update(tab.id, { active: true })
 
     chrome.scripting.executeScript(
-      { target: { tabId: tab.id }, func: NAVIGATE_FUNC, args: [targetIdx] },
+      { target: { tabId }, func: NAVIGATE_FUNC, args: [targetIdx] },
       (results) => {
         const res = results?.[0]?.result as NavResult
         if (res?.ok) {

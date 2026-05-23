@@ -1,3 +1,4 @@
+// Tracker.js can see => Main world like the page JS etc ??
 (function() {
   if (window.__sentinelTrackerInstalled) return;
   window.__sentinelTrackerInstalled = true;

@@ -1,3 +1,4 @@
+// content.tsx => Can see DOM(Document Object Model) but not JS (Javascript)
 // ─────────────────────────────────────────────────────────────────────────────
 // content.tsx — Plasmo Content Script
 //
@@ -6,6 +7,7 @@
 //
 // Plasmo auto-injects this file into every page because of the exported `config`
 // below. No manifest.json entry needed.
+//
 // ─────────────────────────────────────────────────────────────────────────────
 
 import type { PlasmoCSConfig } from "plasmo"
@@ -416,6 +418,10 @@ const stopLogging = () => {
 
 // Page Visibility API — fires when the user switches tabs or minimises the window
 document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) {
+    // Notify the sidepanel that this tab is now active — replaces chrome.tabs.onActivated
+    chrome.runtime.sendMessage({ type: "TAB_ACTIVATED" }).catch(() => {})
+  }
   document.hidden ? stopLogging() : startLogging()
 })
 
