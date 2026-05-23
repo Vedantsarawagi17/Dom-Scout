@@ -12,6 +12,10 @@
 
 import type { PlasmoCSConfig } from "plasmo"
 
+type LargestContentfulPaintEntry = PerformanceEntry & {
+  element?: HTMLElement | null
+}
+
 // Plasmo's CSUI wrapper always tries to render a default export from content.tsx.
 // Without one it gets undefined and React crashes with "Element type is invalid".
 // This no-op component satisfies Plasmo without rendering anything visible.
@@ -362,7 +366,7 @@ const longTaskObserver = new PerformanceObserver((list) => {
 
     // ── Blame Logic: correlate the freeze with the current LCP element ──────
     performance.getEntriesByType("largest-contentful-paint").forEach((lcp) => {
-      const lcpEntry = lcp as LargestContentfulPaint
+      const lcpEntry = lcp as LargestContentfulPaintEntry
       if (lcpEntry.element) {
         console.error(
           `%cCULPRIT FOUND: The UI froze for ${task.duration.toFixed(2)}ms while rendering this ${lcpEntry.element.tagName}:`,
