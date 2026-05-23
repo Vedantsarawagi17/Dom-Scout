@@ -6,9 +6,9 @@ Plasmo auto-generates the full Chrome manifest at build time.
 ## Permissions
 
 - "storage"    → Save/Read data locally
-- "tabs"       → Query which tab is active
 - "scripting"  → Inject JS into pages programmatically
 - "sidePanel"  → Unlock the Chrome side panel API
+- "webRequest" → Track main-frame redirects for the redirect trace
 
 ## host_permissions
 
@@ -39,8 +39,7 @@ Plasmo detects src/content.tsx and its exported `config` object:
 Auto-injects into every page at document_start — the earliest possible moment,
 before the DOM is even built. Critical so the tracker gets in before any page scripts run.
 
-## web_accessible_resources (not needed in Plasmo)
+## web_accessible_resources
 
-In Metrics, tracker.js was listed here so content.js could inject it via chrome.runtime.getURL().
-In dom-scout, the tracker code is inlined as a string and injected via a <script> tag directly,
-so no web_accessible_resources entry is needed.
+tracker.js is listed here so content.tsx can inject it with chrome.runtime.getURL().
+Chrome requires this declaration before a web page can load the extension asset.
